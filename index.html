@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>חידון שיעור 1 – המסע אל החלל</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#02040a; --ink:#e9eef6; --muted:#97a4ba; --line:rgba(190,210,240,.15);
+  --glass:rgba(6,12,26,.6); --gold:#d8b46a; --gold-soft:rgba(216,180,106,.13);
+  --miss:#e8917e; --miss-soft:rgba(232,145,126,.11); --cap:24vh;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --void:#02040a; --ink:#e9eef6; --muted:#97a4ba; }
+}
+:root[data-theme="dark"]{ --void:#02040a; --ink:#e9eef6; --muted:#97a4ba; }
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ height:100%; scroll-padding-top:env(safe-area-inset-top,0px); background:var(--void); }
+body{
+  margin:0; min-height:100%; background:var(--void); color:var(--ink);
+  font-family:"Heebo",system-ui,"Segoe UI",Arial,sans-serif; font-weight:400; line-height:1.6;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+
+/* ---------- Scene ---------- */
+.scene{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+#stars{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.planet{
+  position:absolute; left:50%; top:calc(100% - var(--cap));
+  width:max(1800px,230vmax); aspect-ratio:1/1; transform:translateX(-50%);
+}
+.sun{
+  position:absolute; left:66%; top:2.05%; width:620px; height:620px;
+  transform:translate(-50%,-50%); border-radius:50%;
+  background:radial-gradient(circle, #fff 0, #fffaf0 1.2%, rgba(255,230,190,.85) 2.6%, rgba(255,196,120,.32) 9%, rgba(255,170,90,.1) 22%, transparent 50%);
+}
+.surface{
+  position:absolute; inset:0; border-radius:50%; overflow:hidden;
+  background:
+    radial-gradient(42% 7% at 66% 0%, #4b92cf 0%, #21679e 28%, #0f3b63 58%, transparent 100%),
+    #061a30;
+}
+.clouds{
+  position:absolute; top:0; left:0; width:200%; height:9%;
+  background-repeat:repeat-x; background-size:50% 100%; opacity:0;
+  transition:opacity 2.4s ease; animation:spin 900s linear infinite;
+}
+.clouds.ready{ opacity:1; }
+@keyframes spin{ to{ transform:translateX(-50%); } }
+.night{
+  position:absolute; inset:0; border-radius:50%;
+  background:linear-gradient(to left, transparent 52%, rgba(1,4,12,.55) 70%, rgba(1,3,8,.9) 88%);
+}
+.limb{
+  position:absolute; inset:0; border-radius:50%;
+  background:radial-gradient(circle, transparent 48.7%, rgba(0,4,14,.5) 50%);
+}
+.atmo, .rim{ position:absolute; inset:-1.2%; border-radius:50%; }
+.atmo{
+  background:radial-gradient(circle, transparent 48.55%, rgba(120,195,255,.6) 48.86%, rgba(80,150,255,.2) 49.3%, rgba(60,120,255,.06) 49.85%, transparent 50.4%);
+}
+.rim{
+  background:radial-gradient(circle, transparent 48.6%, rgba(255,226,180,.85) 48.84%, rgba(255,190,120,.25) 49.2%, transparent 49.9%);
+  -webkit-mask-image:linear-gradient(to right, transparent 50%, #000 63%, #000 70%, transparent 82%);
+          mask-image:linear-gradient(to right, transparent 50%, #000 63%, #000 70%, transparent 82%);
+}
+.flare{
+  position:absolute; left:66%; top:1.85%; width:1100px; height:1100px; transform:translate(-50%,-50%);
+  background:radial-gradient(circle, rgba(255,235,205,.35) 0, rgba(255,200,140,.08) 18%, transparent 45%);
+  mix-blend-mode:screen;
+}
+.streak{
+  position:absolute; left:66%; top:1.85%; width:150vw; height:2px; transform:translate(-50%,-50%);
+  background:linear-gradient(to right, transparent, rgba(255,214,160,.08) 25%, rgba(255,236,210,.55) 50%, rgba(255,214,160,.08) 75%, transparent);
+  filter:blur(.6px); mix-blend-mode:screen;
+}
+.vignette{
+  position:absolute; inset:0;
+  background:radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
+}
+
+/* ---------- Layout ---------- */
+.app{
+  position:relative; z-index:1; min-height:100%;
+  display:flex; flex-direction:column;
+}
+.bar{
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:20px clamp(18px,4vw,44px) 14px; color:var(--muted); font-size:.92rem;
+}
+.course{ font-family:"Frank Ruhl Libre","Times New Roman",serif; font-size:1.08rem; color:var(--ink); letter-spacing:.01em; }
+.progress{ height:2px; margin:0 clamp(18px,4vw,44px); background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden; }
+.progress span{ display:block; height:100%; width:0; background:var(--gold); transition:width .6s ease; }
+
+.stage{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:clamp(24px,5vh,56px) clamp(16px,4vw,40px) calc(var(--cap) * .7);
+}
+.screen{ width:min(760px,100%); }
+.screen[hidden]{ display:none; }
+
+/* Intro */
+#intro{ text-align:center; }
+.lesson{ color:var(--gold); font-weight:500; font-size:1rem; margin:0 0 10px; }
+h1{
+  font-family:"Frank Ruhl Libre","Times New Roman",serif; font-weight:700;
+  font-size:clamp(2.9rem,8vw,5.6rem); line-height:1.02; margin:0 0 22px; letter-spacing:-.01em;
+  text-shadow:0 0 40px rgba(120,170,255,.18), 0 2px 24px rgba(0,0,0,.6);
+}
+.lede{ color:#c3cddd; font-weight:300; font-size:clamp(1.05rem,2.2vw,1.22rem); max-width:44ch; margin:0 auto 34px; }
+.reveal > *{ animation:rise 1.5s cubic-bezier(.2,.7,.2,1) both; }
+.reveal > :nth-child(2){ animation-delay:.25s; }
+.reveal > :nth-child(3){ animation-delay:.6s; }
+.reveal > :nth-child(4){ animation-delay:.95s; }
+@keyframes rise{ from{ opacity:0; transform:translateY(14px); filter:blur(6px); } to{ opacity:1; transform:none; filter:none; } }
+
+/* Panel */
+.panel{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(16px) saturate(120%); backdrop-filter:blur(16px) saturate(120%);
+  border:1px solid var(--line); border-radius:18px;
+  padding:clamp(22px,4.2vw,42px);
+  box-shadow:0 40px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.panel.swap{ animation:swap .45s ease both; }
+@keyframes swap{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+
+.qtitle{ color:var(--gold); font-weight:500; font-size:.98rem; margin:0 0 8px; }
+.qtext{
+  font-family:"Heebo",system-ui,"Segoe UI",Arial,sans-serif; font-weight:700;
+  font-size:clamp(1.42rem,3.3vw,2rem); line-height:1.38; margin:0 0 26px;
+}
+.options{ list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.opt{
+  width:100%; display:grid; grid-template-columns:1.9em 1fr; gap:12px; align-items:baseline;
+  text-align:start; padding:14px 18px; border-radius:11px;
+  background:rgba(255,255,255,.035); border:1px solid var(--line);
+  color:var(--ink); font:inherit; font-size:1.06rem; line-height:1.5; cursor:pointer;
+  transition:border-color .2s, background-color .2s, opacity .3s;
+}
+.opt:hover:not(:disabled){ border-color:rgba(216,180,106,.5); background:rgba(216,180,106,.06); }
+.opt:focus-visible, .btn:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+.letter{ font-family:"Frank Ruhl Libre","Times New Roman",serif; font-weight:500; color:var(--muted); font-size:1.1rem; }
+.opt:disabled{ cursor:default; }
+.opt.is-correct{ border-color:var(--gold); background:var(--gold-soft); }
+.opt.is-correct .letter{ color:var(--gold); }
+.opt.is-wrong{ border-color:var(--miss); background:var(--miss-soft); }
+.opt.is-wrong .letter{ color:var(--miss); }
+.opt.is-dim{ opacity:.42; }
+
+.feedback{
+  margin-top:22px; padding:16px 20px; border-radius:4px 11px 11px 4px;
+  border-inline-start:3px solid var(--gold); background:var(--gold-soft);
+  animation:swap .4s ease both;
+}
+.feedback.miss{ border-color:var(--miss); background:var(--miss-soft); }
+.feedback[hidden]{ display:none; }
+.verdict{ font-weight:600; margin:0 0 4px; color:var(--gold); }
+.feedback.miss .verdict{ color:var(--miss); }
+.fbtext{ margin:0; color:#d6deea; font-weight:300; font-size:1.04rem; }
+
+.actions{ display:flex; justify-content:flex-start; margin-top:24px; }
+.btn{
+  font:inherit; font-weight:500; font-size:1.04rem; cursor:pointer;
+  padding:12px 30px; border-radius:999px; border:1px solid var(--gold);
+  background:var(--gold); color:#1b1407;
+  box-shadow:0 8px 30px rgba(216,180,106,.22);
+  transition:background-color .2s, box-shadow .2s;
+}
+.btn:hover{ background:#e4c27c; box-shadow:0 10px 36px rgba(216,180,106,.32); }
+.btn.ghost{ background:transparent; color:var(--ink); box-shadow:none; border-color:var(--line); }
+.btn.ghost:hover{ border-color:var(--gold); background:rgba(216,180,106,.06); }
+.btn[hidden]{ display:none; }
+
+/* Result */
+.score{ display:flex; align-items:baseline; gap:14px; margin:6px 0 10px; }
+.score b{ font-family:"Frank Ruhl Libre","Times New Roman",serif; font-weight:700; font-size:clamp(3.6rem,10vw,5.4rem); line-height:1; color:var(--gold); }
+.score span{ color:var(--muted); font-size:1.15rem; }
+.rmsg{ font-family:"Frank Ruhl Libre","Times New Roman",serif; font-size:clamp(1.25rem,2.8vw,1.6rem); line-height:1.45; margin:0 0 26px; }
+.review{ list-style:none; margin:0 0 28px; padding:0; border-top:1px solid var(--line); }
+.review li{ display:grid; grid-template-columns:2.2em 1fr auto; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:1rem; }
+.review .n{ color:var(--muted); }
+.review .st{ font-weight:500; color:var(--gold); }
+.review .st.no{ color:var(--miss); }
+.result-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+@media (max-width:640px){
+  :root{ --cap:15vh; }
+  .planet{ width:max(1400px,280vmax); }
+  .opt{ padding:13px 14px; font-size:1rem; }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation:none !important; transition:none !important; }
+  .clouds{ opacity:1; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene" aria-hidden="true">
+  <canvas id="stars"></canvas>
+  <div class="planet">
+    <div class="sun"></div>
+    <div class="surface">
+      <div class="clouds" id="clouds"></div>
+      <div class="night"></div>
+      <div class="limb"></div>
+    </div>
+    <div class="atmo"></div>
+    <div class="rim"></div>
+    <div class="flare"></div>
+    <div class="streak"></div>
+  </div>
+  <div class="vignette"></div>
+</div>
+
+<div class="app">
+  <header class="bar">
+    <span class="course">קורס החלל – שיעור 1</span>
+    <span id="counter">10 שאלות</span>
+  </header>
+  <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+
+  <main class="stage">
+    <section id="intro" class="screen reveal">
+      <p class="lesson">חידון שיעור 1</p>
+      <h1>המסע אל החלל</h1>
+      <p class="lede">עשר שאלות על המקום שלנו ביקום, על מה שאפשר לראות מהחלל ועל הדרך שבה לוויינים עוזרים לנו להבין את כדור הארץ.</p>
+      <button class="btn" id="start" type="button">התחלת החידון</button>
+    </section>
+
+    <section id="quiz" class="screen panel" hidden>
+      <p class="qtitle" id="qtitle"></p>
+      <h2 class="qtext" id="qtext" tabindex="-1"></h2>
+      <ol class="options" id="options"></ol>
+      <div class="feedback" id="feedback" aria-live="polite" hidden>
+        <p class="verdict" id="verdict"></p>
+        <p class="fbtext" id="fbtext"></p>
+      </div>
+      <div class="actions"><button class="btn" id="next" type="button" hidden>לשאלה הבאה</button></div>
+    </section>
+
+    <section id="result" class="screen panel" hidden>
+      <p class="qtitle">סיימתם את החידון</p>
+      <div class="score"><b id="score">0</b><span>מתוך 10 תשובות נכונות</span></div>
+      <p class="rmsg" id="rmsg"></p>
+      <ol class="review" id="review"></ol>
+      <div class="result-actions">
+        <button class="btn" id="again" type="button">התחלה מחדש</button>
+        <button class="btn ghost" id="mistakes" type="button">תרגול השאלות שטעיתי בהן</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const Q = [
+ { t:'איפה אנחנו נמצאים?', q:'באיזה סדר נכון לתאר את המקום שבו אנחנו חיים?',
+   o:['כדור הארץ, מערכת השמש, גלקסיית שביל החלב, היקום','כדור הארץ, גלקסיית שביל החלב, מערכת השמש, היקום','מערכת השמש, כדור הארץ, היקום, שביל החלב','היקום, כדור הארץ, מערכת השמש, שביל החלב'], a:0,
+   w:'לא בדיוק. כדור הארץ הוא כוכב לכת שנמצא במערכת השמש. מערכת השמש נמצאת בגלקסיית שביל החלב, ושביל החלב היא אחת מתוך מספר עצום של גלקסיות ביקום.',
+   r:'נכון! זה הסדר: כדור הארץ, מערכת השמש, שביל החלב, היקום.' },
+ { t:'מה נמצא בחלל?', q:'איזו תשובה מתארת בצורה הטובה ביותר מה אפשר למצוא בחלל?',
+   o:['רק כוכבים וכוכבי לכת','כוכבים, כוכבי לכת, ירחים, אסטרואידים, שביטים, גז, אבק וגלקסיות','רק גלקסיות','רק עצמים שאנחנו יכולים לראות מכדור הארץ'], a:1,
+   w:'החלל מכיל הרבה יותר מכוכבים וכוכבי לכת. יש בו גם ירחים, אסטרואידים, שביטים, גז, אבק וגלקסיות שלמות.',
+   r:'נכון! החלל מכיל מגוון עצום של גופים ותופעות, ואנחנו עדיין ממשיכים לגלות ולחקור.' },
+ { t:'למה להסתכל על כדור הארץ מהחלל?', q:'מהו אחד היתרונות החשובים של צפייה בכדור הארץ מהחלל?',
+   o:['אפשר לראות רק את הערים הגדולות','אפשר לראות אזורים עצומים ולזהות תופעות שקשה לראות מהקרקע','אפשר לראות את כל האנשים בעולם','אפשר לראות רק את מזג האוויר'], a:1,
+   w:'המבט מהחלל מאפשר לנו לראות שטחים עצומים בבת אחת ולעקוב אחר תופעות כמו עננים, שריפות, מים, צמחייה ושינויים בשטח.',
+   r:'נכון! לפעמים שינוי נקודת המבט מאפשר לנו לראות דברים שלא יכולנו לראות מהקרקע.' },
+ { t:'מה לוויין עושה?', q:'מהו תפקיד אפשרי של לוויין תצפית?',
+   o:['הוא אוסף מידע על כדור הארץ','הוא מחליט בעצמו מה לעשות עם המידע','הוא משנה את מזג האוויר','הוא מייצר חמצן בכדור הארץ'], a:0,
+   w:'לוויין יכול לאסוף מידע באמצעות מצלמות וחיישנים. לאחר מכן המידע מועבר לכדור הארץ, ואנשים ומערכות מנתחים אותו.',
+   r:'נכון. הלוויין הוא כלי שאוסף מידע, אבל בני אדם מנתחים את המידע ומנסים להבין מה הוא מספר לנו.' },
+ { t:'מה אפשר לזהות בתמונת לוויין?', q:'בתמונת לוויין אתם רואים אזור כחול גדול, שדות ירוקים וכביש ארוך. מה אפשר לומר בוודאות יחסית?',
+   o:['האזור הכחול הוא בהכרח ים','השדות שייכים לחקלאי מסוים','בתמונה ניתן לזהות גוף מים, אזורים חקלאיים וכביש','האזור צולם בישראל'], a:2,
+   w:'חשוב להבדיל בין מה שאנחנו רואים לבין מה שאנחנו משערים. אפשר לזהות מאפיינים בתמונה, אבל לא תמיד אפשר לדעת בוודאות מה הם או היכן צולמה התמונה בלי מידע נוסף.',
+   r:'מצוין. חוקר טוב מתחיל בתצפית לפני שהוא מגיע למסקנות.' },
+ { t:'תצפית או השערה?', q:'אתם רואים בתמונת לוויין שטח ירוק גדול. איזו מהאפשרויות היא תצפית ולא השערה?',
+   o:['זה יער','זה שטח ששייך לשמורת טבע','אני רואה אזור ירוק גדול','בעלי חיים חיים בו'], a:2,
+   w:'"תצפית" היא דבר שאנחנו יכולים לראות ישירות בתמונה. "זה יער" או "בעלי חיים חיים בו" כבר דורשים מאיתנו לפרש או להסיק.',
+   r:'נכון! "אני רואה אזור ירוק גדול" הוא תיאור של מה שנמצא בתמונה, בלי להסיק עדיין מהו.' },
+ { t:'למה להשוות תמונות לאורך זמן?', q:'מדוע חוקרים עשויים להשוות תמונות לוויין של אותו אזור משנים שונות?',
+   o:['כדי לראות אם התמונה השתנתה בצבע','כדי לזהות ולמדוד שינויים שהתרחשו באזור','כדי למצוא אנשים שהצטלמו','כדי להפוך את התמונות ליפות יותר'], a:1,
+   w:'כאשר משווים את אותו אזור לאורך זמן, אפשר לזהות שינויים כמו שינוי בשטחי צמחייה, מקורות מים, יערות, קרחונים או אזורים בנויים.',
+   r:'נכון. תמונות לאורך זמן מאפשרות לנו לא רק לראות את כדור הארץ, אלא גם לעקוב אחר השינויים שהוא עובר.' },
+ { t:'מה עושים עם המידע?', q:'לוויין אסף מידע על אזור שבו מתרחשת שריפה. מה עושים עם המידע?',
+   o:['הלוויין בעצמו מגיע לכבות את השריפה','המידע יכול לעזור לבני אדם להבין היכן השריפה מתרחשת וכיצד היא מתפשטת','המידע גורם לשריפה להיעלם','הלוויין שולח מים לאזור'], a:1,
+   w:'הלוויין אינו מכבה שריפות. הוא מספק מידע שיכול לעזור לאנשים להבין מה מתרחש בשטח ולקבל החלטות.',
+   r:'נכון. אחד היתרונות החשובים של טכנולוגיית חלל הוא שהיא מספקת מידע שעוזר לנו להבין תופעות על פני כדור הארץ.' },
+ { t:'למה אנחנו ממשיכים לחקור את החלל?', q:'איזו תשובה מתאימה ביותר למסר של השיעור?',
+   o:['כי כבר גילינו הכול ואנחנו רוצים למצוא עוד כוכבים','כי יש עדיין שאלות רבות שאין לנו עליהן תשובות, והחלל יכול לעזור לנו ללמוד על היקום וגם על כדור הארץ','רק כדי לשלוח אנשים לירח','רק כדי לצלם תמונות יפות'], a:1,
+   w:'אנחנו עדיין לא מבינים הכול על היקום. בנוסף, חקר החלל אינו עוסק רק במה שנמצא רחוק מאיתנו: טכנולוגיות חלל עוזרות לנו גם ללמוד על כדור הארץ.',
+   r:'בדיוק. סקרנות, שאלות ומידע חדש הם חלק מרכזי מהסיבה שאנחנו ממשיכים לחקור.' },
+ { t:'שאלת סיכום', q:'נניח שאתם יכולים לשלוח לוויין חדש לחלל. איזו משימה מתאימה ביותר לרעיון שלמדנו בשיעור?',
+   o:['לשלוח לוויין בלי מטרה ולראות מה יקרה','לשלוח לוויין שיאסוף מידע על שינויי מים וצמחייה בכדור הארץ','לשלוח לוויין שיחליט בעצמו אילו בעיות קיימות בכדור הארץ','לשלוח לוויין רק כדי שיטוס מהר'], a:1,
+   w:'לוויין צריך משימה מוגדרת. הוא יכול לאסוף מידע על תופעות בכדור הארץ, ולאחר מכן החוקרים מנתחים את המידע כדי לענות על שאלות.',
+   r:'מצוין! כבר התחלתם לחשוב כמו חוקרי חלל: מגדירים שאלה, אוספים מידע, מנתחים ומסיקים מסקנות.' }
+];
+const L = ['א','ב','ג','ד'];
+const $ = id => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let set = [], pos = 0, score = 0, answered = false, results = [];
+
+function show(id){ ['intro','quiz','result'].forEach(s => $(s).hidden = s !== id); }
+
+function begin(indices){
+  set = indices; pos = 0; score = 0; results = [];
+  show('quiz'); render();
+}
+
+function render(){
+  const q = Q[set[pos]]; answered = false;
+  $('counter').textContent = `שאלה ${pos+1} מתוך ${set.length}`;
+  $('progress').style.width = (pos / set.length * 100) + '%';
+  $('qtitle').textContent = q.t;
+  $('qtext').textContent = q.q;
+  const ol = $('options'); ol.innerHTML = '';
+  q.o.forEach((txt,k) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'opt';
+    b.innerHTML = `<span class="letter">${L[k]}</span><span></span>`;
+    b.lastChild.textContent = txt;
+    b.addEventListener('click', () => choose(k));
+    li.appendChild(b); ol.appendChild(li);
+  });
+  $('feedback').hidden = true; $('next').hidden = true;
+  const p = $('quiz'); p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap');
+  $('qtext').focus({preventScroll:true});
+  if (pos > 0) window.scrollTo({top:0, behavior: reduce ? 'auto' : 'smooth'});
+}
+
+function choose(k){
+  if (answered) return; answered = true;
+  const q = Q[set[pos]], ok = k === q.a;
+  if (ok) score++;
+  results.push({ i:set[pos], ok });
+  [...$('options').querySelectorAll('.opt')].forEach((b,j) => {
+    b.disabled = true;
+    if (j === q.a) b.classList.add('is-correct');
+    else if (j === k) b.classList.add('is-wrong');
+    else b.classList.add('is-dim');
+  });
+  const fb = $('feedback');
+  fb.className = 'feedback' + (ok ? '' : ' miss');
+  $('verdict').textContent = ok ? 'תשובה נכונה' : `התשובה הנכונה היא ${L[q.a]}`;
+  $('fbtext').textContent = ok ? q.r : q.w;
+  fb.hidden = false;
+  $('progress').style.width = ((pos+1) / set.length * 100) + '%';
+  const nx = $('next');
+  nx.textContent = pos === set.length - 1 ? 'לתוצאות' : 'לשאלה הבאה';
+  nx.hidden = false; nx.focus({preventScroll:true});
+  fb.scrollIntoView({block:'nearest', behavior: reduce ? 'auto' : 'smooth'});
+}
+
+function finish(){
+  show('result');
+  const n = set.length;
+  $('counter').textContent = 'סיום';
+  $('progress').style.width = '100%';
+  $('score').textContent = score;
+  $('score').nextElementSibling.textContent = `מתוך ${n} תשובות נכונות`;
+  const ratio = score / n;
+  $('rmsg').textContent =
+    ratio === 1 ? 'תוצאה מושלמת. אתם כבר חושבים כמו חוקרי חלל: מתבוננים, שואלים ומסיקים בזהירות.' :
+    ratio >= .7 ? 'עבודה טובה מאוד. הבנתם את רוב הרעיונות המרכזיים של השיעור.' :
+    ratio >= .4 ? 'בסיס טוב. כדאי לעבור שוב על השאלות שבהן טעיתם ולקרוא את ההסברים.' :
+                  'זו רק נקודת ההתחלה של המסע. חזרו לשיעור ונסו שוב.';
+  const rv = $('review'); rv.innerHTML = '';
+  results.forEach((r, idx) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="n">${idx+1}</span><span></span><span class="st${r.ok ? '' : ' no'}">${r.ok ? 'נכון' : 'לא נכון'}</span>`;
+    li.children[1].textContent = Q[r.i].t;
+    rv.appendChild(li);
+  });
+  const wrong = results.filter(r => !r.ok).map(r => r.i);
+  $('mistakes').hidden = wrong.length === 0;
+  $('mistakes').onclick = () => begin(wrong);
+  const p = $('result'); p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap');
+  window.scrollTo({top:0, behavior: reduce ? 'auto' : 'smooth'});
+}
+
+const all = () => Q.map((_,i) => i);
+$('start').addEventListener('click', () => begin(all()));
+$('again').addEventListener('click', () => begin(all()));
+$('next').addEventListener('click', () => { if (pos < set.length - 1){ pos++; render(); } else finish(); });
+document.addEventListener('keydown', e => {
+  if ($('quiz').hidden || answered) return;
+  const k = ['1','2','3','4'].indexOf(e.key);
+  if (k > -1 && k < Q[set[pos]].o.length) choose(k);
+});
+
+/* ---------- Starfield ---------- */
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const cv = $('stars'), cx = cv.getContext('2d');
+let W, H, dpr, base, bright = [], sprite;
+
+function makeSprite(){
+  const s = document.createElement('canvas'); s.width = s.height = 64;
+  const g = s.getContext('2d');
+  const gr = g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.08,'rgba(255,255,255,.9)');
+  gr.addColorStop(.22,'rgba(200,220,255,.25)'); gr.addColorStop(1,'rgba(200,220,255,0)');
+  g.fillStyle = gr; g.fillRect(0,0,64,64);
+  return s;
+}
+
+function build(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W*dpr; cv.height = H*dpr;
+  base = document.createElement('canvas'); base.width = cv.width; base.height = cv.height;
+  const b = base.getContext('2d'); b.scale(dpr,dpr);
+  const R = rng(42), M = Math.max(W,H);
+
+  [[.15,.2,.6,'rgba(35,65,140,.22)'],[.85,.12,.5,'rgba(85,55,135,.13)'],[.55,.45,.65,'rgba(25,100,135,.10)'],[.3,.6,.4,'rgba(60,40,110,.08)']]
+  .forEach(([x,y,r,c]) => {
+    const g = b.createRadialGradient(x*W,y*H,0,x*W,y*H,r*M);
+    g.addColorStop(0,c); g.addColorStop(1,'rgba(0,0,0,0)');
+    b.fillStyle = g; b.fillRect(0,0,W,H);
+  });
+
+  const ang = Math.atan2(-.8*H, 1.2*W), cxm = W/2, cym = H*.45, bw = M*.13;
+  b.save(); b.translate(cxm,cym); b.rotate(ang);
+  const lg = b.createLinearGradient(0,-bw*1.6,0,bw*1.6);
+  lg.addColorStop(0,'rgba(170,185,220,0)'); lg.addColorStop(.5,'rgba(190,200,230,.07)'); lg.addColorStop(1,'rgba(170,185,220,0)');
+  b.fillStyle = lg; b.fillRect(-M*1.5,-bw*1.6,M*3,bw*3.2);
+  b.restore();
+
+  const cols = ['255,255,255','205,222,255','255,236,214','255,214,176','185,206,255'];
+  const dot = (x,y,r,a,c) => { b.fillStyle = `rgba(${c},${a})`; b.beginPath(); b.arc(x,y,r,0,Math.PI*2); b.fill(); };
+  const n1 = Math.round(W*H/850);
+  for (let i=0;i<n1;i++) dot(R()*W, R()*H, Math.pow(R(),3)*1.05+.18, .2+R()*.65, cols[(R()*cols.length)|0]);
+  const n2 = Math.round(W*H/420), cos = Math.cos(ang), sin = Math.sin(ang);
+  for (let i=0;i<n2;i++){
+    const along = (R()-.5)*M*2.4, off = (R()+R()+R()-1.5)/1.5*bw;
+    dot(cxm + along*cos - off*sin, cym + along*sin + off*cos, R()*.45+.15, .08+R()*.4, cols[(R()*2)|0]);
+  }
+
+  bright = [];
+  const nb = Math.round(W*H/26000)+12;
+  for (let i=0;i<nb;i++) bright.push({ x:R()*W, y:R()*H*.85, s:10+Math.pow(R(),2)*22, a:.45+R()*.5, sp:.0006+R()*.0012, ph:R()*6.28 });
+}
+
+function frame(t){
+  cx.setTransform(1,0,0,1,0,0); cx.clearRect(0,0,cv.width,cv.height);
+  cx.drawImage(base,0,0);
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  for (const s of bright){
+    cx.globalAlpha = s.a * (reduce ? 1 : (.72 + .28*Math.sin(t*s.sp + s.ph)));
+    cx.drawImage(sprite, s.x - s.s/2, s.y - s.s/2, s.s, s.s);
+  }
+  cx.globalAlpha = 1;
+  if (!reduce) requestAnimationFrame(frame);
+}
+
+sprite = makeSprite(); build();
+if (reduce) frame(0); else requestAnimationFrame(frame);
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { build(); if (reduce) frame(0); }, 150); });
+
+/* ---------- Earth texture (seamless, procedural) ---------- */
+function earthTexture(){
+  const TW = 1200, TH = 180;
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+  const g = c.getContext('2d'), img = g.createImageData(TW,TH), d = img.data;
+  const hash = (x,y,s) => { let h = (x*374761393 + y*668265263 + s*982451653) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967295; };
+  const vn = (x,y,p,s) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x-xi, yf = y-yi;
+    const u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf);
+    const x0 = ((xi%p)+p)%p, x1 = (x0+1)%p;
+    const a = hash(x0,yi,s), b = hash(x1,yi,s), c2 = hash(x0,yi+1,s), e = hash(x1,yi+1,s);
+    return a + (b-a)*u + (c2-a)*v + (a-b-c2+e)*u*v;
+  };
+  const fbm = (x,y,s,cells) => { let sum=0, amp=.5, nrm=0, f=1; for (let o=0;o<5;o++){ const p = cells*f; sum += amp*vn(x*p, y*p, p, s+o*17); nrm += amp; amp *= .5; f *= 2; } return sum/nrm; };
+  const ss = (a,b,x) => { const t = Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+  for (let y=0;y<TH;y++){
+    for (let x=0;x<TW;x++){
+      const nx = x/TW, ny = y/TW*1.9;
+      const land = ss(.555,.59, fbm(nx,ny,11,6));
+      const tone = fbm(nx,ny,5,14);
+      const wx = fbm(nx,ny,3,4)*.04;
+      const cl = ss(.5,.74, fbm(nx+wx,ny,29,9)) * .95;
+      const la = land*.62;
+      const lr = 58 + tone*70, lgc = 72 + tone*40, lb = 48 + tone*20;
+      const A = cl + la*(1-cl);
+      const i = (y*TW+x)*4;
+      if (A > 0.001){
+        d[i]   = (lr*la*(1-cl) + 246*cl)/A;
+        d[i+1] = (lgc*la*(1-cl) + 249*cl)/A;
+        d[i+2] = (lb*la*(1-cl) + 255*cl)/A;
+      }
+      d[i+3] = A*255;
+    }
+  }
+  g.putImageData(img,0,0);
+  const el = $('clouds');
+  el.style.backgroundImage = `url(${c.toDataURL()})`;
+  requestAnimationFrame(() => el.classList.add('ready'));
+}
+setTimeout(earthTexture, 60);
+</script>
+</body>
+</html>
