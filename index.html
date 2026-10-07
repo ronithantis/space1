@@ -314,9 +314,9 @@ const Q = [
    o:['כי כבר גילינו הכול ואנחנו רוצים למצוא עוד כוכבים','כי יש עדיין שאלות רבות שאין לנו עליהן תשובות, והחלל יכול לעזור לנו ללמוד על היקום וגם על כדור הארץ','רק כדי לשלוח אנשים לירח','רק כדי לצלם תמונות יפות'], a:1,
    w:'אנחנו עדיין לא מבינים הכול על היקום. בנוסף, חקר החלל אינו עוסק רק במה שנמצא רחוק מאיתנו: טכנולוגיות חלל עוזרות לנו גם ללמוד על כדור הארץ.',
    r:'בדיוק. סקרנות, שאלות ומידע חדש הם חלק מרכזי מהסיבה שאנחנו ממשיכים לחקור.' },
- { t:'שאלת סיכום', multi:true, q:'באילו תחומים משתפר המדע בזכות מידע מלוויינים שמקיפים את כדור הארץ? בחרו לפחות שניים.',
+ { t:'שאלת סיכום', multi:true, min:3, q:'באילו תחומים משתפר המדע בזכות מידע מלוויינים שמקיפים את כדור הארץ? סמנו את כל התחומים המתאימים, לפחות שלושה.',
    o:['חיזוי מזג אוויר','חקר מבנה האטום','חקלאות מדויקת','מעקב אחרי הפשרת קרחונים','חקר פעילות המוח האנושי','ניהול אסונות טבע','מיפוי וניווט (GPS)'], c:[0,2,3,5,6],
-   w:'כדאי לבדוק שוב. את מבנה האטום ואת פעילות המוח חוקרים במעבדות, ולא בעזרת מידע מהחלל. לוויינים עוזרים בתחומים כמו חיזוי מזג אוויר, חקלאות מדויקת, מעקב אחרי קרחונים, ניהול אסונות טבע וניווט.',
+   w:'כדאי לבדוק שוב: צריך לסמן לפחות שלושה תחומים נכונים, בלי תחומים שגויים. את מבנה האטום ואת פעילות המוח חוקרים במעבדות, ולא בעזרת מידע מהחלל. לוויינים עוזרים בתחומים כמו חיזוי מזג אוויר, חקלאות מדויקת, מעקב אחרי קרחונים, ניהול אסונות טבע וניווט.',
    r:'מצוין! כל התחומים האלה משתפרים בזכות לוויינים: חיזוי מזג אוויר, חקלאות מדויקת, מעקב אחרי הפשרת קרחונים, ניהול אסונות טבע ומיפוי וניווט.' }
 ];
 const L = ['א','ב','ג','ד','ה','ו','ז'];
@@ -327,7 +327,7 @@ let set = [], pos = 0, picks = {};
 
 function show(id){ ['intro','quiz','result'].forEach(s => $(s).hidden = s !== id); }
 const answeredCount = () => set.filter(i => picks[i] !== undefined).length;
-const isRight = i => { const q = Q[i], p = picks[i]; if (p === undefined) return false; return q.multi ? (p.length >= 2 && p.every(k => q.c.includes(k))) : p === q.a; };
+const isRight = i => { const q = Q[i], p = picks[i]; if (p === undefined) return false; return q.multi ? (p.length >= (q.min || 2) && p.every(k => q.c.includes(k))) : p === q.a; };
 const scoreOf = () => set.filter(isRight).length;
 let draft = [];
 
@@ -366,7 +366,7 @@ function render(scroll){
         if (i > -1) draft.splice(i,1); else draft.push(k);
         b.classList.toggle('is-picked', i === -1);
         b.setAttribute('aria-pressed', String(i === -1));
-        $('submitMulti').disabled = draft.length < 2;
+        $('submitMulti').disabled = draft.length < (q.min || 2);
       });
     } else b.addEventListener('click', () => choose(k));
     li.appendChild(b); ol.appendChild(li);
@@ -378,12 +378,23 @@ function render(scroll){
     const ok = isRight(qi);
     fb.className = 'feedback' + (ok ? '' : ' miss');
     $('verdict').textContent = ok ? 'תשובה נכונה' : (q.multi ? 'לא בדיוק' : `התשובה הנכונה היא ${L[q.a]}`);
-    $('fbtext').textContent = ok ? q.r : q.w;
+    $('fbtext').textContent = ok ? (q.multi ? multiPraise(q, pick) : q.r) : q.w;
     fb.hidden = false;
   } else fb.hidden = true;
   renderNav();
   const p = $('quiz'); p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap');
   if (scroll) window.scrollTo({top:0, behavior: reduce ? 'auto' : 'smooth'});
+}
+
+function hList(arr){
+  if (arr.length === 1) return arr[0];
+  return arr.slice(0,-1).join(', ') + ' ו' + arr[arr.length-1];
+}
+function multiPraise(q, pick){
+  const missing = q.c.filter(k => !pick.includes(k)).map(k => q.o[k]);
+  return missing.length
+    ? `מצוין! התחומים שבחרתם, וכן ${hList(missing)}, משתפרים בזכות לוויינים.`
+    : 'מצוין! כל התחומים שבחרתם משתפרים בזכות לוויינים.';
 }
 
 function renderNav(){
@@ -445,7 +456,7 @@ function finish(){
 const all = () => Q.map((_,i) => i);
 $('start').addEventListener('click', () => begin(all()));
 $('again').addEventListener('click', () => begin(all()));
-$('submitMulti').addEventListener('click', () => { if (draft.length >= 2) choose(null); });
+$('submitMulti').addEventListener('click', () => { if (draft.length >= (Q[set[pos]].min || 2)) choose(null); });
 $('prev').addEventListener('click', () => { if (pos > 0) go(pos - 1); });
 $('next').addEventListener('click', () => {
   if (pos < set.length - 1) return go(pos + 1);
